@@ -330,7 +330,7 @@
             <h2>Alarm</h2>
             <div id="alarm-message">Time to wake up!</div>
             <div class="alarm-buttons">
-                <button class="snooze-btn" onclick="snoozeAlarmNotification()">Snooze (5 min)</button>
+                <button id="snooze" class="snooze-btn" onclick="snoozeAlarmNotification()">Snooze (5 min)</button>
                 <button class="dismiss-btn" onclick="dismissAlarmNotification()">Dismiss</button>
             </div>
         </div>
@@ -531,7 +531,7 @@
             alarmSound.play();
 
             document.body.classList.add('shake-animation');
-
+            snooze.style.display='inline';
             alarmOverlay.style.display = 'flex';
             alarmMessageElement.textContent = `Alarm! It's ${alarm.hours}:${alarm.minutes} ${alarm.ampm}`;
         }
@@ -560,7 +560,6 @@
                 if (alarm.triggered) {
                     alarm.triggered = false;
                     alarm.dismissed = true;
-
                 }
             });
 
@@ -656,6 +655,7 @@
 
             alarmOverlay.style.display = 'flex';
             alarmMessageElement.textContent = 'Countdown Timer Finished!';
+            snooze.style.display='none';
         }
 
         function startStopwatch() {
