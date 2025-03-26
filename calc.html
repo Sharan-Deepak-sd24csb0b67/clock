@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clock</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tektur:wght@400..900&display=swap');
+        :root {
+            --bg-light: rgba(255, 255, 255, 0.7);
+            --text-light: black;
+            --bg-dark: rgba(51, 51, 51, 0.7);
+            --text-dark: white;
+            --bg-neon: rgba(0, 0, 0, 0.5);
+            --text-neon: #0f0;
+            --bg-custom: rgba(74, 21, 75, 0.7);
+            --text-custom: #ffd700;
+            --primary-accent: #4CAF50;
+            --secondary-accent: #2196F3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Tektur";
+            transition: all 0.3s ease;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            transition: background-color 0.3s ease;
+        }
+
+        body.light::before {
+            background-color: var(--bg-light);
+        }
+
+        body.dark::before {
+            background-color: var(--bg-dark);
+        }
+
+        body.neon::before {
+            background-color: var(--bg-neon);
+        }
+
+        body.custom::before {
+            background-color: var(--bg-custom);
+        }
+
+        body.light {
+            color: var(--text-light);
+        }
+
+        body.dark {
+            color: var(--text-dark);
+        }
+
+        body.neon {
+            color: var(--text-neon);
+        }
+
+        body.custom {
+            color: var(--text-custom);
+        }
+
+        #clock-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        #date-display {
+            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        #clock {
+            font-size: 3.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .colon {
+            animation: blink-colon 1s infinite;
+        }
+
+        @keyframes blink-colon {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .shake-animation {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+
+        .theme-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .theme-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .section {
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .section h3 {
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        button {
+            background-color: var(--primary-accent);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .alarm-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .alarm-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: rgba(255,255,255,0.1);
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        #progress {
+            width: 100%;
+            height: 100%;
+            background-color: var(--primary-accent);
+            transition: width 1s linear;
+        }
+
+        @media (max-width: 600px) {
+            #clock-container {
+                margin: 0 10px;
+                padding: 20px;
+            }
+
+            .sections {
+                grid-template-columns: 1fr;
+            }
+
+            #clock {
+                font-size: 2.5rem;
+            }
+        }
+
+        .neon #clock {
+            animation: neon-glow 1.5s infinite alternate;
+        }
+
+        @keyframes neon-glow {
+            from { text-shadow: 0 0 5px #0f0, 0 0 10px #0f0; }
+            to { text-shadow: 0 0 10px #0f0, 0 0 20px #0f0; }
+        }
+
+        #custom-theme-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-input-group label {
+            flex: 1;
+        }
+
+        .color-input-group input[type="color"] {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            border: none;
+            cursor: pointer;
+        }
+
+        #apply-custom-theme {
+            margin-top: 10px;
+        }
+
+        #alarm-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .alarm-notification {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .alarm-notification h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .alarm-notification .alarm-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .alarm-notification button {
+            flex: 1;
+            padding: 15px;
+            font-size: 1rem;
+            border-radius: 10px;
+        }
+
+        .snooze-btn {
+            background-color: var(--secondary-accent);
+        }
+
+        .dismiss-btn {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body class="light">
+    <!-- Alarm Overlay -->
+    <div id="alarm-overlay">
+        <div class="alarm-notification">
+            <h2>Alarm</h2>
+            <div id="alarm-message">Time to wake up!</div>
+            <div class="alarm-buttons">
+                <button class="snooze-btn" onclick="snoozeAlarmNotification()">Snooze (5 min)</button>
+                <button class="dismiss-btn" onclick="dismissAlarmNotification()">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clock-container">
+        <div id="date-display">Date</div>
+        <div id="clock">00:00:00 AM</div>
+
+        <div class="theme-switcher">
+            <button class="theme-btn light-theme" onclick="changeTheme('light')">Light</button>
+            <button class="theme-btn dark-theme" onclick="changeTheme('dark')">Dark</button>
+            <button class="theme-btn neon-theme" onclick="changeTheme('neon')">Neon</button>
+            <button class="theme-btn custom-theme" onclick=""><a style="text-decoration: none; color:white" href="#custom-theme-section">Custom</a></button>
+        </div>
+
+        <div class="sections">
+            <div class="section" id="alarm-section">
+                <h3>Alarm Settings</h3>
+                <div>
+                    <input type="time" id="alarm-time">
+                    <button onclick="addAlarm()">Add Alarm</button>
+                    <div id="alarm-list" class="alarm-list"></div>
+                </div>
+            </div>
+
+            <div class="section" id="stopwatch">
+                <h3>Stopwatch</h3>
+                <div id="stopwatch-display" style="text-align: center; font-size: 1.5rem; margin-bottom: 15px;">00:00:00</div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="startStopwatch()">Start</button>
+                    <button onclick="pauseStopwatch()">Pause</button>
+                    <button onclick="resetStopwatch()">Reset</button>
+                </div>
+            </div>
+
+            <div class="section" id="countdown-section">
+                <h3>Countdown Timer</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="number" id="countdown-minutes" placeholder="Minutes" min="0" style="width: 50%;">
+                    <input type="number" id="countdown-seconds" placeholder="Seconds" min="0" max="59" style="width: 50%;">
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="startCountdown()">Start</button>
+                    <button onclick="resetCountdown()">Reset</button>
+                </div>
+                <div id="progress-bar">
+                    <div id="progress"></div>
+                </div>
+                <div id="countdown-timer" style="text-align: center; margin-top: 10px;"></div>
+            </div>
+            <div class="section" id="Time Setting">
+                <h3>Set Custom Time</h3>
+                <div>
+                    <input type="time" id="time-setting">
+                    <button onclick="setTime()">Set Time</button>
+                </div>
+            </div>
+
+            <div class="section" id="custom-theme-section">
+                <h3>Custom Theme</h3>
+                <div class="color-input-group">
+                    <label for="bg-color">Background Color:</label>
+                    <input type="color" id="bg-color" value="#4a154b">
+                </div>
+                <div class="color-input-group">
+                    <label for="text-color">Text Color:</label>
+                    <input type="color" id="text-color" value="#ffd700">
+                </div>
+                <div class="color-input-group">
+                    <label for="accent-color">Accent Color:</label>
+                    <input type="color" id="accent-color" value="#4CAF50">
+                </div>
+                <button id="apply-custom-theme" onclick="applyCustomTheme()">Apply Custom Theme</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const clockElement = document.getElementById('clock');
+        const dateDisplayElement = document.getElementById('date-display');
+        const countdownTimerElement = document.getElementById('countdown-timer');
+        const progressElement = document.getElementById('progress');
+        const alarmTimeInput = document.getElementById('alarm-time');
+        const countdownMinutesInput = document.getElementById('countdown-minutes');
+        const countdownSecondsInput = document.getElementById('countdown-seconds');
+        const alarmListElement = document.getElementById('alarm-list');
+        const stopwatchDisplayElement = document.getElementById('stopwatch-display');
+        const alarmOverlay = document.getElementById('alarm-overlay');
+        const alarmMessageElement = document.getElementById('alarm-message');
+
+        let alarmSound = new Audio("alarm.mp3");
+        let countdownInterval;
+        let stopwatchInterval;
+        let stopwatchTime = 0;
+        let stopwatchRunning = false;
+
+        let currentTime = new Date();
+        let timeOffset = 0;
+        let timeUpdateInterval = null;
+
+        let alarms = [];
+
+        function setTime() {
+            const timeSettingInput = document.getElementById('time-setting');
+            const timeValue = timeSettingInput.value;
+
+            if (!timeValue) {
+                alert('Please enter a valid time.');
+                return;
+            }
+
+            if (timeUpdateInterval) {
+                clearInterval(timeUpdateInterval);
+            }
+
+            const [hours, minutes] = timeValue.split(':');
+            const now = new Date();
+
+            const manualTime = new Date(
+                now.getFullYear(), 
+                now.getMonth(), 
+                now.getDate(), 
+                parseInt(hours), 
+                parseInt(minutes)
+            );
+
+            timeOffset = manualTime.getTime() - Date.now();
+
+            timeUpdateInterval = setInterval(() => {
+                currentTime = new Date(Date.now() + timeOffset);
+                updateClock();
+            }, 1000);
+
+            updateClock();
+
+            timeSettingInput.value = '';
+
+            alert(`Time set to ${manualTime.toLocaleTimeString()}`);
+        }
+
+        function updateClock() {
+            const now = currentTime;
+
+            const hours = now.getHours() % 12 || 12;
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateDisplayElement.textContent = now.toLocaleDateString('en-US', dateOptions);
+
+            const clockDisplay = `${hours}<span class="colon">:</span>${minutes}<span class="colon">:</span>${seconds} ${ampm}`;
+            clockElement.innerHTML = clockDisplay;
+
+            checkAlarms(now);
+        }
+
+        function initializeClock() {
+            timeUpdateInterval = setInterval(() => {
+                currentTime = new Date();
+                updateClock();
+            }, 1000);
+
+            updateClock();
+        }
+
+        function checkAlarms(now) {
+            const currentHours = (now.getHours() % 12 || 12).toString().padStart(2, '0');
+            const currentMinutes = now.getMinutes().toString().padStart(2, '0');
+            const currentAmPm = now.getHours() >= 12 ? 'PM' : 'AM';
+
+            alarms.forEach(alarm => {
+                if (alarm.enabled && 
+                    alarm.hours === currentHours && 
+                    alarm.minutes === currentMinutes && 
+                    !alarm.triggered && 
+                    !alarm.dismissed) {
+                    triggerAlarm(alarm);
+                }
+            });
+        }
+
+        function applyCustomTheme() {
+            const bgColor = document.getElementById('bg-color').value;
+            const textColor = document.getElementById('text-color').value;
+            const accentColor = document.getElementById('accent-color').value;
+
+            document.documentElement.style.setProperty('--bg-custom', bgColor);
+            document.documentElement.style.setProperty('--text-custom', textColor);
+            document.documentElement.style.setProperty('--primary-accent', accentColor);
+
+            changeTheme('custom');
+        }
+
+        function triggerAlarm(alarm) {
+            alarm.triggered = true;
+            alarmSound.play();
+
+            document.body.classList.add('shake-animation');
+
+            alarmOverlay.style.display = 'flex';
+            alarmMessageElement.textContent = `Alarm! It's ${alarm.hours}:${alarm.minutes} ${alarm.ampm}`;
+        }
+
+        function snoozeAlarmNotification() {
+
+            const triggeredAlarm = alarms.find(alarm => alarm.triggered);
+
+            if (triggeredAlarm) {
+                snoozeAlarm(triggeredAlarm);
+            }
+
+            dismissAlarmNotification();
+        }
+
+        function dismissAlarmNotification() {
+
+            alarmSound.pause();
+            alarmSound.currentTime = 0;
+
+            document.body.classList.remove('shake-animation');
+
+            alarmOverlay.style.display = 'none';
+
+            alarms.forEach(alarm => {
+                if (alarm.triggered) {
+                    alarm.triggered = false;
+                    alarm.dismissed = true;
+
+                }
+            });
+
+            renderAlarmList();
+        }
+
+        function snoozeAlarm(alarm) {
+            let snoozeMinutes = parseInt(alarm.minutes) + 5;
+            let snoozeHours = parseInt(alarm.hours);
+
+            if (snoozeMinutes >= 60) {
+                snoozeMinutes -= 60;
+                snoozeHours++;
+                if (snoozeHours > 12) snoozeHours -= 12;
+            }
+
+            alarm.minutes = snoozeMinutes.toString().padStart(2, '0');
+            alarm.hours = snoozeHours.toString().padStart(2, '0');
+            alarm.triggered = false;
+        }
+
+        function addAlarm() {
+            const time = alarmTimeInput.value;
+            if (!time) return;
+
+            const [hours, minutes] = time.split(':');
+            const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+            const formattedHours = (parseInt(hours) % 12 || 12).toString().padStart(2, '0');
+
+            const alarm = {
+                hours: formattedHours,
+                minutes: minutes,
+                ampm: ampm,
+                enabled: true,
+                triggered: false,
+                dismissed: false  
+            };
+
+            alarms.push(alarm);
+            renderAlarmList();
+            alarmTimeInput.value = '';
+        }
+
+        function renderAlarmList() {
+            alarmListElement.innerHTML = '';
+            alarms.forEach((alarm, index) => {
+                const alarmItem = document.createElement('div');
+                alarmItem.classList.add('alarm-item');
+
+                const alarmText = document.createElement('span');
+                alarmText.textContent = `${alarm.hours}:${alarm.minutes} ${alarm.ampm}`;
+
+                if (alarm.dismissed) {
+                    alarmText.style.textDecoration = 'line-through';
+                    alarmText.style.opacity = '0.5';
+                }
+
+                const enableToggle = document.createElement('input');
+                enableToggle.type = 'checkbox';
+                enableToggle.checked = alarm.enabled && !alarm.dismissed;
+                enableToggle.onchange = () => toggleAlarm(index);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteAlarm(index);
+
+                alarmItem.appendChild(alarmText);
+                alarmItem.appendChild(enableToggle);
+                alarmItem.appendChild(deleteButton);
+
+                alarmListElement.appendChild(alarmItem);
+            });
+        }
+
+        function toggleAlarm(index) {
+
+            if (alarms[index].dismissed) {
+                alarms[index].dismissed = false;
+            }
+            alarms[index].enabled = !alarms[index].enabled;
+            renderAlarmList();
+        }
+
+        function deleteAlarm(index) {
+            alarms.splice(index, 1);
+            renderAlarmList();
+        }
+
+        function triggerCountdownAlarm() {
+            alarmSound.play();
+
+            document.body.classList.add('shake-animation');
+
+            alarmOverlay.style.display = 'flex';
+            alarmMessageElement.textContent = 'Countdown Timer Finished!';
+        }
+
+        function startStopwatch() {
+            if (!stopwatchRunning) {
+                stopwatchInterval = setInterval(() => {
+                    stopwatchTime++;
+                    updateStopwatchDisplay();
+                }, 10);
+                stopwatchRunning = true;
+            }
+        }
+
+        function pauseStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchRunning = false;
+        }
+
+        function resetStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchTime = 0;
+            stopwatchRunning = false;
+            updateStopwatchDisplay();
+        }
+
+        function updateStopwatchDisplay() {
+            const minutes = Math.floor(stopwatchTime / 6000);
+            const seconds = Math.floor((stopwatchTime % 6000) / 100);
+            const centiseconds = stopwatchTime % 100;
+
+            stopwatchDisplayElement.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${centiseconds.toString().padStart(2, '0')}`;
+        }
+
+        function startCountdown() {
+            const minutes = parseInt(countdownMinutesInput.value) || 0;
+            const seconds = parseInt(countdownSecondsInput.value) || 0;
+            let totalSeconds = minutes * 60 + seconds;
+            const totalDuration = totalSeconds;
+
+            clearInterval(countdownInterval);
+            progressElement.style.width = '100%';
+
+            countdownInterval = setInterval(() => {
+                if (totalSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    triggerCountdownAlarm();
+                    countdownTimerElement.textContent = '';
+                    progressElement.style.width = '0%';
+                    return;
+                }
+
+                const remainingMinutes = Math.floor(totalSeconds / 60);
+                const remainingSeconds = totalSeconds % 60;
+
+                countdownTimerElement.textContent = 
+                    `Countdown: ${remainingMinutes}m ${remainingSeconds}s`;
+
+                const progressPercentage = ((totalSeconds-1) / totalDuration) * 100;
+                progressElement.style.width = `${progressPercentage}%`;
+
+                totalSeconds--;
+            }, 1000);
+        }
+
+        function resetCountdown() {
+            clearInterval(countdownInterval);
+            countdownTimerElement.textContent = '';
+            progressElement.style.width = '100%';
+            countdownMinutesInput.value = '';
+            countdownSecondsInput.value = '';
+        }
+
+        function changeTheme(themeName) {
+            document.body.className = themeName;
+        }
+
+        changeTheme('neon');
+
+        initializeClock();
+
+        alarmTimeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addAlarm();
+            }
+        });
+    </script>
+</body>
+</html>
